@@ -1,0 +1,51 @@
+export const CRAFTS = [
+  {
+    key: "nails",
+    name: "Nail Tech",
+    tag: "Nails",
+    blurb: "Acrylics, gel-X, nail art & care.",
+    pros: "1,240",
+  },
+  {
+    key: "barbing",
+    name: "Barbing",
+    tag: "Hair",
+    blurb: "Fades, line-ups, locs & braids.",
+    pros: "980",
+  },
+  {
+    key: "makeup",
+    name: "Makeup Artistry",
+    tag: "Makeup",
+    blurb: "Bridal, glam & everyday beats.",
+    pros: "870",
+  },
+  {
+    key: "lashes",
+    name: "Lash Tech",
+    tag: "Lashes",
+    blurb: "Classic, hybrid & volume sets.",
+    pros: "610",
+  },
+  {
+    key: "tailoring",
+    name: "Tailoring",
+    tag: "Sewing",
+    blurb: "Custom fits, alterations & styles.",
+    pros: "1,050",
+  },
+  {
+    key: "carpentry",
+    name: "Carpentry",
+    tag: "Framework",
+    blurb: "Furniture, fittings & finishing.",
+    pros: "430",
+  },
+  {
+    key: "pedicure",
+    name: "Pedicure",
+    tag: "Pedicure",
+    blurb: "Spa soaks, callus care & polish.",
+    pros: "560",
+  },
+];
