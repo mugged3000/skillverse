@@ -46,9 +46,9 @@ export default function BecomeProfessionalForm() {
         return;
       }
 
-      // The route hands back the craft's real display name — use it to
-      // trigger the welcome banner on the feed.
-      router.push(`/feed?welcome=${encodeURIComponent(data.craftLabel)}`);
+      // The route hands back the new user id and the craft's real
+      // display name — go straight to the new profile, not the feed.
+      router.push(`/professionals/${data.userId}?welcome=${encodeURIComponent(data.craftLabel)}`);
       router.refresh();
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");

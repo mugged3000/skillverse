@@ -126,6 +126,17 @@ exports.Prisma.UserScalarFieldEnum = {
   name: 'name',
   email: 'email',
   passwordHash: 'passwordHash',
+  avatarUrl: 'avatarUrl',
+  bio: 'bio',
+  location: 'location',
+  interests: 'interests',
+  interestGoals: 'interestGoals',
+  contactLink: 'contactLink',
+  emailVerified: 'emailVerified',
+  verificationToken: 'verificationToken',
+  verificationTokenExpiresAt: 'verificationTokenExpiresAt',
+  resetToken: 'resetToken',
+  resetTokenExpiresAt: 'resetTokenExpiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -134,6 +145,7 @@ exports.Prisma.PostScalarFieldEnum = {
   id: 'id',
   authorId: 'authorId',
   imageUrl: 'imageUrl',
+  mediaType: 'mediaType',
   caption: 'caption',
   createdAt: 'createdAt'
 };
@@ -150,6 +162,14 @@ exports.Prisma.CommentScalarFieldEnum = {
   postId: 'postId',
   authorId: 'authorId',
   text: 'text',
+  createdAt: 'createdAt',
+  parentId: 'parentId'
+};
+
+exports.Prisma.CommentLikeScalarFieldEnum = {
+  id: 'id',
+  commentId: 'commentId',
+  userId: 'userId',
   createdAt: 'createdAt'
 };
 
@@ -163,14 +183,44 @@ exports.Prisma.ProfessionalProfileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.FollowScalarFieldEnum = {
+  id: 'id',
+  followerId: 'followerId',
+  followingId: 'followingId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  recipientId: 'recipientId',
+  actorId: 'actorId',
+  type: 'type',
+  postId: 'postId',
+  commentId: 'commentId',
+  preview: 'preview',
+  read: 'read',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 exports.Prisma.NullsOrder = {
@@ -184,7 +234,10 @@ exports.Prisma.ModelName = {
   Post: 'Post',
   Like: 'Like',
   Comment: 'Comment',
-  ProfessionalProfile: 'ProfessionalProfile'
+  CommentLike: 'CommentLike',
+  ProfessionalProfile: 'ProfessionalProfile',
+  Follow: 'Follow',
+  Notification: 'Notification'
 };
 
 /**

@@ -11,7 +11,7 @@ import { LINKS } from "@/lib/navLinks";
 // rendered, the panel is an absolutely-positioned sibling — since
 // neither that row nor <nav> sets a `position`, the header (position:
 // fixed) is still their containing block regardless of nesting depth.
-export default function MobileMenu() {
+export default function MobileMenu({ isLoggedIn = false }) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef(null);
   const menuRef = useRef(null);
@@ -140,22 +140,35 @@ export default function MobileMenu() {
         </nav>
 
         <div className="flex flex-col gap-3">
-          <a
-            ref={(el) => (linkRefs.current[LINKS.length] = el)}
-            href="/login"
-            onClick={() => setOpen(false)}
-            className="text-center text-sm text-thread/80 py-3 rounded-full border border-thread/15 hover:text-canvas hover:border-thread/30 transition-colors"
-          >
-            Sign in
-          </a>
-          <a
-            ref={(el) => (linkRefs.current[LINKS.length + 1] = el)}
-            href="/signup-form"
-            onClick={() => setOpen(false)}
-            className="text-center text-sm font-semibold bg-gold text-ink px-4 py-3.5 rounded-full hover:bg-gold-light transition-colors"
-          >
-            Join free
-          </a>
+          {isLoggedIn ? (
+            <a
+              ref={(el) => (linkRefs.current[LINKS.length] = el)}
+              href="/feed"
+              onClick={() => setOpen(false)}
+              className="text-center text-sm font-semibold bg-gold text-ink px-4 py-3.5 rounded-full hover:bg-gold-light transition-colors"
+            >
+              Go to feed
+            </a>
+          ) : (
+            <>
+              <a
+                ref={(el) => (linkRefs.current[LINKS.length] = el)}
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="text-center text-sm text-thread/80 py-3 rounded-full border border-thread/15 hover:text-canvas hover:border-thread/30 transition-colors"
+              >
+                Sign in
+              </a>
+              <a
+                ref={(el) => (linkRefs.current[LINKS.length + 1] = el)}
+                href="/signup-form"
+                onClick={() => setOpen(false)}
+                className="text-center text-sm font-semibold bg-gold text-ink px-4 py-3.5 rounded-full hover:bg-gold-light transition-colors"
+              >
+                Join free
+              </a>
+            </>
+          )}
           <p className="mt-2 text-center font-mono text-[10px] tracking-[0.16em] text-thread/40">
             SKILLED HANDS, SEEN EVERYWHERE
           </p>

@@ -32,6 +32,20 @@ export async function POST(req) {
     );
   }
 
+  // Checked after the password so a wrong-password guess never reveals
+  // whether an account is verified — same "incorrect" branch either way
+  // right up until credentials are confirmed correct.
+  if (!user.emailVerified) {
+    return NextResponse.json(
+      {
+        error: "Please verify your email before logging in.",
+        code: "EMAIL_NOT_VERIFIED",
+        email: user.email,
+      },
+      { status: 403 }
+    );
+  }
+
   await createSession(user.id);
 
   return NextResponse.json({ id: user.id, name: user.name, email: user.email });

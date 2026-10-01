@@ -7,7 +7,7 @@ import { LINKS } from "@/lib/navLinks";
 import ProsMenu from "./nav/ProsMenu";
 import MobileMenu from "./nav/MobileMenu";
 
-export default function Navbar() {
+export default function Navbar({ isLoggedIn = false }) {
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef(null);
 
@@ -80,21 +80,32 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <a
-            href="/login"
-            className="nav-link text-sm text-thread/80 hover:text-canvas transition-colors px-3 py-2"
-          >
-            Sign in
-          </a>
-          <a
-            href="/signup-form"
-            className="nav-link text-sm font-semibold bg-gold text-ink px-4 py-2.5 rounded-full hover:bg-gold-light transition-colors"
-          >
-            Join free
-          </a>
+          {isLoggedIn ? (
+            <a
+              href="/feed"
+              className="nav-link text-sm font-semibold bg-gold text-ink px-4 py-2.5 rounded-full hover:bg-gold-light transition-colors"
+            >
+              Go to feed
+            </a>
+          ) : (
+            <>
+              <a
+                href="/login"
+                className="nav-link text-sm text-thread/80 hover:text-canvas transition-colors px-3 py-2"
+              >
+                Sign in
+              </a>
+              <a
+                href="/signup-form"
+                className="nav-link text-sm font-semibold bg-gold text-ink px-4 py-2.5 rounded-full hover:bg-gold-light transition-colors"
+              >
+                Join free
+              </a>
+            </>
+          )}
         </div>
 
-        <MobileMenu />
+        <MobileMenu isLoggedIn={isLoggedIn} />
       </div>
     </header>
   );

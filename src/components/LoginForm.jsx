@@ -5,19 +5,52 @@
   screens feel like one system, just fewer fields.
 
   Wired to /server/auth/login — verifies the password and logs the user
-  in (session cookie) on success, then redirects to /feed.
+  in (session cookie) on success, then redirects to /feed. Unverified
+  accounts get a 403 with code EMAIL_NOT_VERIFIED instead of a session,
+  which this form turns into a "resend the link" prompt rather than a
+  dead-end error.
 */
 
 import { useRef, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Eye, EyeOff, MailCheck } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthBrandPanel from "./auth/AuthBrandPanel";
+
+const VERIFY_BANNERS = {
+  expired: {
+    tone: "warn",
+    text: "That verification link expired. Enter your email below and log in to get a new one.",
+  },
+  invalid: {
+    tone: "warn",
+    text: "That verification link isn't valid. Enter your email below and log in to get a new one.",
+  },
+  already: {
+    tone: "info",
+    text: "That email is already verified — go ahead and log in.",
+  },
+};
+
+// Shown when a protected page (like /feed) redirected here because
+// there was no valid session — distinct from VERIFY_BANNERS, which is
+// about the email-verification link flow specifically.
+const REASON_BANNERS = {
+  session_expired: {
+    tone: "warn",
+    text: "Your session ended. Log back in to continue.",
+  },
+};
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verifyBanner = VERIFY_BANNERS[searchParams.get("verify")] || null;
+  const reasonBanner = REASON_BANNERS[searchParams.get("reason")] || null;
+  const banner = verifyBanner || reasonBanner;
+
   const rootRef = useRef(null);
   const panelRef = useRef(null);
   const fieldRefs = useRef([]);
@@ -26,6 +59,9 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | submitting | success
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
+  const [devVerifyUrl, setDevVerifyUrl] = useState(null);
 
   useGSAP(
     () => {
@@ -39,8 +75,12 @@ export default function LoginForm() {
     { scope: rootRef }
   );
 
-  const onChange = (field) => (e) =>
+  const onChange = (field) => (e) => {
     setValues((v) => ({ ...v, [field]: e.target.value }));
+    setUnverifiedEmail(null);
+    setResendStatus("idle");
+    setDevVerifyUrl(null);
+  };
 
   const validate = () => {
     const next = {};
@@ -53,6 +93,7 @@ export default function LoginForm() {
     e.preventDefault();
     const next = validate();
     setErrors(next);
+    setUnverifiedEmail(null);
     if (Object.keys(next).length > 0) return;
 
     setStatus("submitting");
@@ -65,16 +106,38 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrors({ form: data.error || "Something went wrong. Try again." });
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          setUnverifiedEmail(data.email || values.email);
+          setErrors({});
+        } else {
+          setErrors({ form: data.error || "Something went wrong. Try again." });
+        }
         setStatus("idle");
         return;
       }
 
       setStatus("success");
       router.push("/feed");
+      router.refresh();
     } catch {
       setErrors({ form: "Couldn't reach the server. Check your connection and try again." });
       setStatus("idle");
+    }
+  };
+
+  const handleResend = async () => {
+    if (!unverifiedEmail || resendStatus === "sending") return;
+    setResendStatus("sending");
+    try {
+      const res = await fetch("/server/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await res.json().catch(() => null);
+      setDevVerifyUrl(data?.devVerifyUrl || null);
+    } finally {
+      setResendStatus("sent");
     }
   };
 
@@ -117,6 +180,19 @@ export default function LoginForm() {
                 Log in to your SkillVerse account.
               </p>
 
+              {banner && (
+                <p
+                  className={
+                    "mt-4 text-sm rounded-lg px-3 py-2.5 border " +
+                    (banner.tone === "warn"
+                      ? "text-clay-light bg-clay/10 border-clay/30"
+                      : "text-emerald-light bg-emerald/10 border-emerald/30")
+                  }
+                >
+                  {banner.text}
+                </p>
+              )}
+
               <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
                 <div ref={(el) => (fieldRefs.current[3] = el)}>
                   <label htmlFor="email" className="block text-sm text-thread/80 mb-1.5">
@@ -139,9 +215,12 @@ export default function LoginForm() {
                     <label htmlFor="password" className="block text-sm text-thread/80">
                       Password
                     </label>
-                    <a href="#" className="text-xs text-gold-light hover:text-gold transition-colors">
+                                        <Link
+                      href="/forgot-password"
+                      className="text-xs text-gold-light hover:text-gold transition-colors"
+                    >
                       Forgot password?
-                    </a>
+                    </Link>
                   </div>
                   <div className="relative">
                     <input
@@ -175,6 +254,44 @@ export default function LoginForm() {
                   >
                     {errors.form}
                   </p>
+                )}
+
+                {unverifiedEmail && (
+                  <div className="text-sm rounded-lg px-3.5 py-3 border border-gold/25 bg-gold/10 space-y-2">
+                    <p className="flex items-start gap-2 text-thread/80">
+                      <MailCheck size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-gold-light" />
+                      <span>
+                        Please verify <span className="text-canvas">{unverifiedEmail}</span> before
+                        logging in — check your inbox for the link we sent.
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={resendStatus === "sending" || resendStatus === "sent"}
+                      className="text-sm font-medium text-gold-light hover:text-gold transition-colors disabled:opacity-60"
+                    >
+                      {resendStatus === "sending"
+                        ? "Sending…"
+                        : resendStatus === "sent"
+                        ? "New link sent — check your inbox"
+                        : "Resend verification email"}
+                    </button>
+
+                    {devVerifyUrl && (
+                      <div className="pt-1 border-t border-gold/20 mt-2">
+                        <p className="text-thread/70 pt-2">
+                          Email delivery isn&rsquo;t configured on this server — verify instantly here instead:
+                        </p>
+                        <a
+                          href={devVerifyUrl}
+                          className="inline-block mt-1 font-semibold text-gold-light hover:text-gold transition-colors break-all"
+                        >
+                          {devVerifyUrl}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <button

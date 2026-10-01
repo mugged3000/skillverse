@@ -98,6 +98,17 @@ exports.Prisma.UserScalarFieldEnum = {
   name: 'name',
   email: 'email',
   passwordHash: 'passwordHash',
+  avatarUrl: 'avatarUrl',
+  bio: 'bio',
+  location: 'location',
+  interests: 'interests',
+  interestGoals: 'interestGoals',
+  contactLink: 'contactLink',
+  emailVerified: 'emailVerified',
+  verificationToken: 'verificationToken',
+  verificationTokenExpiresAt: 'verificationTokenExpiresAt',
+  resetToken: 'resetToken',
+  resetTokenExpiresAt: 'resetTokenExpiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -106,6 +117,7 @@ exports.Prisma.PostScalarFieldEnum = {
   id: 'id',
   authorId: 'authorId',
   imageUrl: 'imageUrl',
+  mediaType: 'mediaType',
   caption: 'caption',
   createdAt: 'createdAt'
 };
@@ -122,6 +134,14 @@ exports.Prisma.CommentScalarFieldEnum = {
   postId: 'postId',
   authorId: 'authorId',
   text: 'text',
+  createdAt: 'createdAt',
+  parentId: 'parentId'
+};
+
+exports.Prisma.CommentLikeScalarFieldEnum = {
+  id: 'id',
+  commentId: 'commentId',
+  userId: 'userId',
   createdAt: 'createdAt'
 };
 
@@ -135,14 +155,44 @@ exports.Prisma.ProfessionalProfileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.FollowScalarFieldEnum = {
+  id: 'id',
+  followerId: 'followerId',
+  followingId: 'followingId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  recipientId: 'recipientId',
+  actorId: 'actorId',
+  type: 'type',
+  postId: 'postId',
+  commentId: 'commentId',
+  preview: 'preview',
+  read: 'read',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 exports.Prisma.NullsOrder = {
@@ -156,7 +206,10 @@ exports.Prisma.ModelName = {
   Post: 'Post',
   Like: 'Like',
   Comment: 'Comment',
-  ProfessionalProfile: 'ProfessionalProfile'
+  CommentLike: 'CommentLike',
+  ProfessionalProfile: 'ProfessionalProfile',
+  Follow: 'Follow',
+  Notification: 'Notification'
 };
 /**
  * Create the Client
@@ -180,6 +233,10 @@ const config = {
         "fromEnvVar": null,
         "value": "windows",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "rhel-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -206,13 +263,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// SkillVerse — starting minimal: just what sign-up needs.\n// Output path matches your existing db/generated + db/dbkey.js setup.\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id                  String               @id @default(cuid())\n  name                String\n  email               String               @unique\n  passwordHash        String\n  posts               Post[]\n  likes               Like[]\n  comments            Comment[]\n  professionalProfile ProfessionalProfile?\n  createdAt           DateTime             @default(now())\n  updatedAt           DateTime             @updatedAt\n\n  @@map(\"users\")\n}\n\nmodel Post {\n  id        String   @id @default(cuid())\n  authorId  String\n  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  imageUrl  String\n  caption   String?\n  createdAt DateTime @default(now())\n\n  likes    Like[]\n  comments Comment[]\n\n  @@map(\"posts\")\n}\n\nmodel Like {\n  id        String   @id @default(cuid())\n  postId    String\n  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n\n  @@unique([postId, userId])\n  @@map(\"likes\")\n}\n\nmodel Comment {\n  id        String   @id @default(cuid())\n  postId    String\n  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n  authorId  String\n  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  text      String\n  createdAt DateTime @default(now())\n\n  @@map(\"comments\")\n}\n\nmodel ProfessionalProfile {\n  id        String   @id @default(cuid())\n  userId    String   @unique\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  craftKey  String\n  bio       String\n  location  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map(\"professional_profiles\")\n}\n",
-  "inlineSchemaHash": "74740e563f723434a30ef260a62f28fbf77a163a4b5129c6ba9f43cd15d24fef",
+  "inlineSchema": "// SkillVerse — starting minimal: just what sign-up needs.\n// Output path matches your existing db/generated + db/dbkey.js setup.\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"]\n  output        = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id                         String    @id @default(cuid())\n  name                       String\n  email                      String    @unique\n  passwordHash               String\n  avatarUrl                  String?\n  bio                        String?\n  location                   String?\n  interests                  String[]  @default([])\n  interestGoals              Json?\n  contactLink                String?\n  emailVerified              Boolean   @default(false)\n  verificationToken          String?   @unique\n  verificationTokenExpiresAt DateTime?\n\n  resetToken          String?   @unique\n  resetTokenExpiresAt DateTime?\n\n  posts                 Post[]\n  likes                 Like[]\n  comments              Comment[]\n  commentLikes          CommentLike[]\n  notificationsReceived Notification[]       @relation(\"NotificationRecipient\")\n  notificationsSent     Notification[]       @relation(\"NotificationActor\")\n  professionalProfile   ProfessionalProfile?\n  following             Follow[]             @relation(\"FollowerRelation\")\n  followers             Follow[]             @relation(\"FollowingRelation\")\n  createdAt             DateTime             @default(now())\n  updatedAt             DateTime             @updatedAt\n\n  @@map(\"users\")\n}\n\nmodel Post {\n  id        String   @id @default(cuid())\n  authorId  String\n  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  imageUrl  String\n  mediaType String   @default(\"image\")\n  caption   String?\n  createdAt DateTime @default(now())\n\n  likes         Like[]\n  comments      Comment[]\n  notifications Notification[]\n\n  @@map(\"posts\")\n}\n\nmodel Like {\n  id        String   @id @default(cuid())\n  postId    String\n  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n\n  @@unique([postId, userId])\n  @@map(\"likes\")\n}\n\nmodel Comment {\n  id        String   @id @default(cuid())\n  postId    String\n  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n  authorId  String\n  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  text      String\n  createdAt DateTime @default(now())\n\n  parentId String?\n  parent   Comment?  @relation(\"CommentReplies\", fields: [parentId], references: [id], onDelete: Cascade)\n  replies  Comment[] @relation(\"CommentReplies\")\n\n  likes         CommentLike[]\n  notifications Notification[]\n\n  @@map(\"comments\")\n}\n\nmodel CommentLike {\n  id        String   @id @default(cuid())\n  commentId String\n  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n\n  @@unique([commentId, userId])\n  @@map(\"comment_likes\")\n}\n\nmodel ProfessionalProfile {\n  id        String   @id @default(cuid())\n  userId    String   @unique\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  craftKey  String\n  bio       String\n  location  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map(\"professional_profiles\")\n}\n\nmodel Follow {\n  id          String   @id @default(cuid())\n  followerId  String\n  followingId String\n  follower    User     @relation(\"FollowerRelation\", fields: [followerId], references: [id], onDelete: Cascade)\n  following   User     @relation(\"FollowingRelation\", fields: [followingId], references: [id], onDelete: Cascade)\n  createdAt   DateTime @default(now())\n\n  @@unique([followerId, followingId])\n  @@map(\"follows\")\n}\n\nmodel Notification {\n  id          String   @id @default(cuid())\n  recipientId String\n  recipient   User     @relation(\"NotificationRecipient\", fields: [recipientId], references: [id], onDelete: Cascade)\n  actorId     String\n  actor       User     @relation(\"NotificationActor\", fields: [actorId], references: [id], onDelete: Cascade)\n  // FOLLOW | POST_LIKE | COMMENT | REPLY | COMMENT_LIKE | BOOKING\n  type        String\n  postId      String?\n  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)\n  commentId   String?\n  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)\n  // Short snippet (e.g. the comment text) so the list doesn't need a join.\n  preview     String?\n  read        Boolean  @default(false)\n  createdAt   DateTime @default(now())\n\n  @@index([recipientId, read, createdAt])\n  @@map(\"notifications\")\n}\n",
+  "inlineSchemaHash": "4ae7eb7ee57ca2bc7f8397b606b1f4739f0cd7db3f9238a90ff147c038a8ab00",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"Like\",\"relationName\":\"LikeToUser\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToUser\"},{\"name\":\"professionalProfile\",\"kind\":\"object\",\"type\":\"ProfessionalProfile\",\"relationName\":\"ProfessionalProfileToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"users\"},\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"imageUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"caption\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"Like\",\"relationName\":\"LikeToPost\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToPost\"}],\"dbName\":\"posts\"},\"Like\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"LikeToPost\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"LikeToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"likes\"},\"Comment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"CommentToPost\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CommentToUser\"},{\"name\":\"text\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"comments\"},\"ProfessionalProfile\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ProfessionalProfileToUser\"},{\"name\":\"craftKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"professional_profiles\"}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interests\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interestGoals\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"contactLink\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"verificationToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"verificationTokenExpiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"resetToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"resetTokenExpiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"Like\",\"relationName\":\"LikeToUser\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToUser\"},{\"name\":\"commentLikes\",\"kind\":\"object\",\"type\":\"CommentLike\",\"relationName\":\"CommentLikeToUser\"},{\"name\":\"notificationsReceived\",\"kind\":\"object\",\"type\":\"Notification\",\"relationName\":\"NotificationRecipient\"},{\"name\":\"notificationsSent\",\"kind\":\"object\",\"type\":\"Notification\",\"relationName\":\"NotificationActor\"},{\"name\":\"professionalProfile\",\"kind\":\"object\",\"type\":\"ProfessionalProfile\",\"relationName\":\"ProfessionalProfileToUser\"},{\"name\":\"following\",\"kind\":\"object\",\"type\":\"Follow\",\"relationName\":\"FollowerRelation\"},{\"name\":\"followers\",\"kind\":\"object\",\"type\":\"Follow\",\"relationName\":\"FollowingRelation\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"users\"},\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"imageUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mediaType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"caption\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"Like\",\"relationName\":\"LikeToPost\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToPost\"},{\"name\":\"notifications\",\"kind\":\"object\",\"type\":\"Notification\",\"relationName\":\"NotificationToPost\"}],\"dbName\":\"posts\"},\"Like\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"LikeToPost\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"LikeToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"likes\"},\"Comment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"CommentToPost\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CommentToUser\"},{\"name\":\"text\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"parentId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"parent\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentReplies\"},{\"name\":\"replies\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentReplies\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"CommentLike\",\"relationName\":\"CommentToCommentLike\"},{\"name\":\"notifications\",\"kind\":\"object\",\"type\":\"Notification\",\"relationName\":\"CommentToNotification\"}],\"dbName\":\"comments\"},\"CommentLike\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"commentId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"comment\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToCommentLike\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CommentLikeToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"comment_likes\"},\"ProfessionalProfile\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ProfessionalProfileToUser\"},{\"name\":\"craftKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"professional_profiles\"},\"Follow\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"followerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"followingId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"follower\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FollowerRelation\"},{\"name\":\"following\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FollowingRelation\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"follows\"},\"Notification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipient\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"NotificationRecipient\"},{\"name\":\"actorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actor\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"NotificationActor\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"NotificationToPost\"},{\"name\":\"commentId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"comment\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"CommentToNotification\"},{\"name\":\"preview\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"read\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"notifications\"}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

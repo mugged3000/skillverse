@@ -6,8 +6,9 @@
   (if any) happens later inside the product, not at the door.
 
   Wired to /server/auth/signup — creates the account, hashes the
-  password, and logs the user in (session cookie) on success, then
-  redirects to /feed.
+  password, and emails a verification link. No session is created yet:
+  the account can't log in until that link is clicked, so this form
+  shows a "check your email" state instead of redirecting to /feed.
 */
 
 import { useRef, useState } from "react";
@@ -15,12 +16,10 @@ import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, MailCheck } from "lucide-react";
 import AuthBrandPanel from "./auth/AuthBrandPanel";
 
 export default function SignUpForm() {
-  const router = useRouter();
   const rootRef = useRef(null);
   const panelRef = useRef(null);
   const fieldRefs = useRef([]);
@@ -30,6 +29,8 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | submitting | success
   const [showPassword, setShowPassword] = useState(false);
+  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
+  const [devVerifyUrl, setDevVerifyUrl] = useState(null);
 
   useGSAP(
     () => {
@@ -77,10 +78,26 @@ export default function SignUpForm() {
       }
 
       setStatus("success");
-      router.push("/feed");
+      setDevVerifyUrl(data.devVerifyUrl || null);
     } catch {
       setErrors({ form: "Couldn't reach the server. Check your connection and try again." });
       setStatus("idle");
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendStatus === "sending") return;
+    setResendStatus("sending");
+    try {
+      const res = await fetch("/server/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: values.email }),
+      });
+      const data = await res.json().catch(() => null);
+      setDevVerifyUrl(data?.devVerifyUrl || null);
+    } finally {
+      setResendStatus("sent");
     }
   };
 
@@ -106,11 +123,48 @@ export default function SignUpForm() {
 
           {status === "success" ? (
             <div ref={(el) => (fieldRefs.current[1] = el)} className="mt-10">
-              <h1 className="font-display font-semibold text-3xl text-canvas">You&rsquo;re in.</h1>
+              <span className="grid place-items-center w-12 h-12 rounded-full bg-gold/15 text-gold-light">
+                <MailCheck size={22} strokeWidth={1.75} />
+              </span>
+              <h1 className="mt-5 font-display font-semibold text-3xl text-canvas">
+                Check your email.
+              </h1>
               <p className="mt-3 text-thread/70 leading-relaxed">
-                Your SkillVerse account has been created and you&rsquo;re
-                logged in.
+                We sent a verification link to{" "}
+                <span className="text-canvas">{values.email}</span>. Click it to
+                activate your account — you&rsquo;ll be signed in automatically.
               </p>
+              <p className="mt-6 text-sm text-thread/50">
+                Didn&rsquo;t get it? Check spam, or{" "}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendStatus === "sending" || resendStatus === "sent"}
+                  className="text-gold-light hover:text-gold transition-colors disabled:opacity-60"
+                >
+                  {resendStatus === "sending"
+                    ? "sending…"
+                    : resendStatus === "sent"
+                    ? "sent — check your inbox"
+                    : "resend the link"}
+                </button>
+                .
+              </p>
+
+              {devVerifyUrl && (
+                <div className="mt-5 text-sm rounded-lg px-3.5 py-3 border border-gold/25 bg-gold/10 space-y-2">
+                  <p className="text-thread/80">
+                    Email delivery isn&rsquo;t configured on this server yet, so no email
+                    actually went out. For now, verify instantly here instead:
+                  </p>
+                  <a
+                    href={devVerifyUrl}
+                    className="inline-block text-sm font-semibold text-gold-light hover:text-gold transition-colors break-all"
+                  >
+                    {devVerifyUrl}
+                  </a>
+                </div>
+              )}
             </div>
           ) : (
             <>

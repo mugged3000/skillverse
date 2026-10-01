@@ -1,25 +1,16 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import FeedMenu from "./FeedMenu";
+import NotificationBell from "./NotificationBell";
 
-export default function FeedHeader({ isProfessional }) {
-  const router = useRouter();
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  async function handleLogout() {
-    if (loggingOut) return;
-    setLoggingOut(true);
-    try {
-      await fetch("/server/auth/logout", { method: "POST" });
-    } finally {
-      router.push("/login");
-      router.refresh();
-    }
-  }
-
+// Shared header for the logged-in area of the app (feed + profile
+// pages) — not the public marketing Navbar, which always shows
+// "Sign in / Join free" and would be wrong once someone's logged in.
+//
+// The right side is a single hamburger menu (FeedMenu) rather than a
+// row of separate links + a bare "Log out" button — it holds "Back to
+// feed" / "Feed", "Discover professionals", "My profile" / "Become a
+// professional", "About SkillVerse", and Log out, tailored by context.
+export default function FeedHeader({ isProfessional, viewerId, showBackToFeed = false }) {
   return (
     <header className="sticky top-0 z-20 border-b border-thread/10 bg-ink/85 backdrop-blur-md">
       <div className="mx-auto max-w-xl flex items-center justify-between px-6 py-4">
@@ -30,25 +21,9 @@ export default function FeedHeader({ isProfessional }) {
           <span className="font-display font-semibold text-canvas">SkillVerse</span>
         </Link>
 
-        <div className="flex items-center gap-4">
-          {!isProfessional && (
-            <Link
-              href="/become-professional"
-              className="text-sm font-medium text-gold-light hover:text-gold transition-colors"
-            >
-              Become a pro
-            </Link>
-          )}
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="flex items-center gap-1.5 text-sm text-thread/60 hover:text-clay-light transition-colors disabled:opacity-50"
-          >
-            <LogOut size={15} strokeWidth={1.75} />
-            {loggingOut ? "Logging out…" : "Log out"}
-          </button>
+        <div className="flex items-center gap-2.5">
+          <NotificationBell />
+          <FeedMenu isProfessional={isProfessional} viewerId={viewerId} showBackToFeed={showBackToFeed} />
         </div>
       </div>
     </header>
