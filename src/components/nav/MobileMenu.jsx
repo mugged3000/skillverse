@@ -115,8 +115,14 @@ export default function MobileMenu({ isLoggedIn = false }) {
         role="dialog"
         aria-modal="true"
         aria-hidden={!open}
-        style={{ transformOrigin: "top right", pointerEvents: "none" }}
-        className="md:hidden invisible opacity-0 absolute right-4 top-full mt-3 z-[60] w-72 h- max-h- flex flex-col rounded-2xl border border-thread/10 bg-ink-soft shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] p-6"
+        style={{
+        transformOrigin: "top right",
+        pointerEvents: "none",
+        height: "85vh",
+        maxHeight: "85vh",
+        minHeight: "85vh",
+          }}
+        className="md:hidden invisible opacity-0 absolute right-4 top-full mt-3 z-[60] w-72 flex flex-col rounded-2xl border border-thread/10 bg-ink-soft shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] p-6"
       >
         <div className="flex items-center gap-2 pb-5 border-b border-thread/10">
           <span className="grid place-items-center w-9 h-9 rounded-full bg-gold text-ink font-display font-bold text-sm">
