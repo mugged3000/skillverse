@@ -109,8 +109,7 @@ export default function MobileMenu({ isLoggedIn = false }) {
       </button>
 
       {/* Vertical menu card, anchored top-right under the toggle button —
-          tall (close to 90% of viewport height) rather than a short
-          compact card. */}
+          tall (85% of viewport height) rather than a short compact card. */}
       <div
         ref={menuRef}
         role="dialog"
