@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { LINKS } from "@/lib/navLinks";
@@ -116,7 +117,7 @@ export default function MobileMenu({ isLoggedIn = false }) {
         aria-modal="true"
         aria-hidden={!open}
         style={{ transformOrigin: "top right", pointerEvents: "none" }}
-        className="md:hidden invisible opacity-0 absolute right-4 top-full mt-3 z-[60] w-72 h-[90vh] max-h-[46rem] flex flex-col rounded-2xl border border-thread/10 bg-ink-soft shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] p-6"
+        className="md:hidden invisible opacity-0 absolute right-4 top-full mt-3 z-[60] w-72 h- max-h- flex flex-col rounded-2xl border border-thread/10 bg-ink-soft shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] p-6"
       >
         <div className="flex items-center gap-2 pb-5 border-b border-thread/10">
           <span className="grid place-items-center w-9 h-9 rounded-full bg-gold text-ink font-display font-bold text-sm">
@@ -141,35 +142,35 @@ export default function MobileMenu({ isLoggedIn = false }) {
 
         <div className="flex flex-col gap-3">
           {isLoggedIn ? (
-            <a
+            <Link
               ref={(el) => (linkRefs.current[LINKS.length] = el)}
               href="/feed"
               onClick={() => setOpen(false)}
               className="text-center text-sm font-semibold bg-gold text-ink px-4 py-3.5 rounded-full hover:bg-gold-light transition-colors"
             >
               Go to feed
-            </a>
+            </Link>
           ) : (
             <>
-              <a
+              <Link
                 ref={(el) => (linkRefs.current[LINKS.length] = el)}
                 href="/login"
                 onClick={() => setOpen(false)}
                 className="text-center text-sm text-thread/80 py-3 rounded-full border border-thread/15 hover:text-canvas hover:border-thread/30 transition-colors"
               >
                 Sign in
-              </a>
-              <a
+              </Link>
+              <Link
                 ref={(el) => (linkRefs.current[LINKS.length + 1] = el)}
                 href="/signup-form"
                 onClick={() => setOpen(false)}
                 className="text-center text-sm font-semibold bg-gold text-ink px-4 py-3.5 rounded-full hover:bg-gold-light transition-colors"
               >
                 Join free
-              </a>
+              </Link>
             </>
           )}
-          <p className="mt-2 text-center font-mono text-[10px] tracking-[0.16em] text-thread/40">
+          <p className="mt-2 text-center font-mono text- tracking-[0.16em] text-thread/40">
             SKILLED HANDS, SEEN EVERYWHERE
           </p>
         </div>

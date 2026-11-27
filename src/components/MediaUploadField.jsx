@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { UploadCloud, X, Loader2 } from "lucide-react";
-import { uploadFileToCloudinary, isCloudinaryConfigured } from "@/lib/cloudinaryUpload";
+import { uploadFileToCloudinary } from "@/lib/cloudinaryUpload";
 import PostMedia from "./PostMedia";
 
 // A file-picker that uploads directly to Cloudinary and hands the
@@ -40,11 +40,6 @@ export default function MediaUploadField({
     if (!file) return;
 
     setError("");
-
-    if (!isCloudinaryConfigured()) {
-      setError("Uploads aren't set up yet — ask the site owner to configure Cloudinary.");
-      return;
-    }
 
     const isVideoFile = file.type.startsWith("video/");
     if (isVideoFile && !allowVideo) {

@@ -1,58 +1,48 @@
-// Uploads a file straight from the browser to Cloudinary using an
-// UNSIGNED upload preset — the file never passes through our own
-// server, so there's no server body-size limit to worry about (this
-// matters for video: Next.js API routes on serverless hosts often cap
-// request bodies around 4-5MB, which most videos blow past).
+// Uploads a file from the browser straight to Cloudinary using a SIGNED
+// upload. The file never passes through our own server (so there's no
+// server body-size limit — this matters for video), but our server
+// decides who may upload: it checks the login and signs each upload with
+// the Cloudinary API secret, which never leaves the server.
 //
-// One-time setup (free Cloudinary account, a few minutes):
-//   1. Sign up at https://cloudinary.com — free tier is plenty for a
-//      project like this (25GB storage / 25GB bandwidth a month).
-//   2. Your "Cloud name" is shown right on the dashboard homepage.
-//   3. Settings (gear icon) → Upload → Upload presets → Add upload
-//      preset. Set "Signing Mode" to "Unsigned". Give it a name.
-//      Recommended while you're at it: set a "Folder" (e.g.
-//      "skillverse") and a "Max file size" on the preset itself —
-//      since the preset name is public (it ships in client-side JS),
-//      those limits are what stop random visitors from using your
-//      account as free file storage.
-//   4. Put both values in .env:
-//        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
-//        NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your-preset-name"
-//   5. Restart `npm run dev`.
-//
-// These two values are NEXT_PUBLIC_ on purpose — an unsigned preset is
-// specifically designed to be called from client-side code. It can
-// only add new uploads within whatever limits the preset itself sets;
-// it can't read, list, or delete anything in your account.
+// Setup (.env — all three are private, none start with NEXT_PUBLIC_):
+//   CLOUDINARY_CLOUD_NAME="your-cloud-name"
+//   CLOUDINARY_API_KEY="your-api-key"
+//   CLOUDINARY_API_SECRET="your-api-secret"
+//   CLOUDINARY_FOLDER="skillverse"      (optional, default "skillverse")
+// Find them in the Cloudinary Console → Settings → API Keys.
+// Restart `npm run dev` after editing .env.
 
-export function isCloudinaryConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME &&
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-  );
-}
-
-// Uses Cloudinary's /auto/upload endpoint so it doesn't need to be
-// told in advance whether the file is an image or a video — the
-// response's resource_type tells us which one it turned out to be.
-// onProgress receives 0-100 as the upload streams.
-export function uploadFileToCloudinary(file, { onProgress } = {}) {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-  if (!cloudName || !uploadPreset) {
-    return Promise.reject(
-      new Error(
-        "Uploads aren't set up yet — add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to .env (see src/lib/cloudinaryUpload.js)."
-      )
-    );
+// Step 1: ask our server for a signed permission slip.
+async function getUploadSignature() {
+  let res;
+  try {
+    res = await fetch("/server/uploads/sign", { method: "POST" });
+  } catch {
+    throw new Error("Couldn't reach the server. Check your connection.");
   }
 
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error("Please log in again to upload.");
+  if (!res.ok) throw new Error(data.error || "Couldn't start the upload. Try again.");
+  return data;
+}
+
+// Step 2: send the file + signature to Cloudinary. Uses the /auto/upload
+// endpoint so it doesn't need to be told in advance whether the file is
+// an image or a video — the response's resource_type says which.
+// onProgress receives 0-100 as the upload streams.
+export async function uploadFileToCloudinary(file, { onProgress } = {}) {
+  const sig = await getUploadSignature();
+
   return new Promise((resolve, reject) => {
-    const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+    const url = `https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`;
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
+    formData.append("api_key", sig.apiKey);
+    formData.append("timestamp", String(sig.timestamp));
+    formData.append("signature", sig.signature);
+    formData.append("folder", sig.folder);
+    formData.append("allowed_formats", sig.allowedFormats);
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);

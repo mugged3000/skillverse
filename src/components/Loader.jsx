@@ -1,47 +1,24 @@
 "use client";
 
-/*
-  SkillVerse preloader.
-
-  Craft "sticker" badges drop in from above and land with a bouncy
-  ease, while a row of bars pulse up and down like a bar chart /
-  equalizer beside the mark. When loading finishes, the bars snap up
-  together in sync, then everything fades and the overlay closes like
-  a camera aperture, handing off to Hero via a "skillverse:ready"
-  window event.
-
-  ── SVG ICONS ──────────────────────────────────────────────────────
-  Each sticker below just points at an image path — no JS import to
-  break. Drop your downloaded SVGs into `public/craft-icons/` using
-  the exact filenames referenced in `src` (or edit the `src` values
-  to match whatever you name them). Until a file exists at that path
-  the badge still renders fine, just empty — nothing else breaks.
-  ────────────────────────────────────────────────────────────────────
-*/
-
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { usePathname } from "next/navigation";
 
 const STICKERS = [
-  // 👉 public/craft-icons/nails.svg
   { src: "/craft-icons/nails.svg", bg: "bg-gold", left: "9%", top: "16%", rotate: -10 },
-  // 👉 public/craft-icons/makeup.svg
   { src: "/craft-icons/makeup.svg", bg: "bg-clay", left: "84%", top: "14%", rotate: 8 },
-  // 👉 public/craft-icons/tailoring.svg
   { src: "/craft-icons/tailoring.svg", bg: "bg-emerald", left: "14%", top: "72%", rotate: 6 },
-  // 👉 public/craft-icons/barbing.svg
   { src: "/craft-icons/barbing.svg", bg: "bg-ink-soft", left: "80%", top: "70%", rotate: -7 },
-  // 👉 public/craft-icons/lashes.svg
   { src: "/craft-icons/lashes.svg", bg: "bg-gold-light", left: "48%", top: "10%", rotate: 5 },
-  // 👉 public/craft-icons/pedicure.svg
   { src: "/craft-icons/pedicure.svg", bg: "bg-clay-light", left: "50%", top: "80%", rotate: -5 },
 ];
 
-// Bar-chart / equalizer loader: each bar loops up and down at its own
-// pace while loading, then all snap to full height together when done.
 const BAR_COUNT = 6;
 
+let hasShownLoader = false;
+
 export default function Loader() {
+  const pathname = usePathname();
   const overlayRef = useRef(null);
   const contentRef = useRef(null);
   const markRef = useRef(null);
@@ -51,9 +28,9 @@ export default function Loader() {
   const taglineRef = useRef(null);
   const stickerRefs = useRef([]);
 
-  const [mounted, setMounted] = useState(
-    () => !(typeof window !== "undefined" && window.__skillverseLoaded)
-  );
+  // Only show on home page, and only once per refresh
+  const shouldShow = pathname === "/" && !hasShownLoader;
+  const [mounted, setMounted] = useState(shouldShow);
 
   useEffect(() => {
     if (!mounted) return;
@@ -66,8 +43,6 @@ export default function Loader() {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      // Stickers start above the viewport, rotated further than their
-      // resting tilt, fully transparent.
       gsap.set(stickerRefs.current, { y: -180, autoAlpha: 0 });
       gsap.set(barRefs.current, { height: "18%" });
 
@@ -89,8 +64,6 @@ export default function Loader() {
           "-=0.2"
         );
 
-      // Stickers drop in one at a time, staggered across the loading
-      // window, each with its own bounce landing.
       stickerRefs.current.forEach((el, i) => {
         if (!el) return;
         tl.to(
@@ -106,8 +79,6 @@ export default function Loader() {
         );
       });
 
-      // Each bar pulses up and down independently, like an equalizer —
-      // not literally tied to percent, just alive while we load.
       barRefs.current.forEach((el, i) => {
         if (!el) return;
         const loop = gsap.to(el, {
@@ -121,7 +92,6 @@ export default function Loader() {
         barLoops.push(loop);
       });
 
-      // Percentage counter runs alongside everything else.
       tl.to(
         progressState,
         {
@@ -136,7 +106,6 @@ export default function Loader() {
         "<"
       );
 
-      // Gentle idle wobble once each sticker has landed.
       stickerRefs.current.forEach((el, i) => {
         if (!el) return;
         gsap.to(el, {
@@ -157,13 +126,12 @@ export default function Loader() {
       const safety = new Promise((res) => setTimeout(res, 3600));
 
       Promise.race([Promise.all([minTime, windowLoaded]), safety]).then(() => {
-        // Stop the independent equalizer loops and bring every bar up
-        // to full height together — a clear "done" beat.
         barLoops.forEach((loop) => loop.kill());
 
         const exitTl = gsap.timeline({
           onComplete: () => {
             document.body.style.overflow = "";
+            hasShownLoader = true;
             window.__skillverseLoaded = true;
             setMounted(false);
           },
@@ -224,8 +192,6 @@ export default function Loader() {
       style={{ clipPath: "circle(150% at 50% 50%)" }}
       aria-hidden={!mounted}
     >
-      {/* Falling craft stickers — see the SVG ICONS note at the top of
-          this file for where to drop your own artwork in. */}
       {STICKERS.map((s, i) => (
         <div
           key={i}
@@ -255,7 +221,6 @@ export default function Loader() {
           Sv
         </div>
 
-        {/* Bar-chart / equalizer loader */}
         <div ref={chartRef} className="mt-8 flex flex-col items-center gap-3">
           <div className="flex items-end gap-1.5 h-10">
             {Array.from({ length: BAR_COUNT }).map((_, i) => (
@@ -282,7 +247,7 @@ export default function Loader() {
 
         <p
           ref={taglineRef}
-          className="mt-6 max-w-[15rem] font-display italic text-sm text-thread/70"
+          className="mt-6 max-w- font-display italic text-sm text-thread/70"
         >
           Real hands, verified work, booked in minutes.
         </p>
