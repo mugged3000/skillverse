@@ -18,10 +18,6 @@ export default function Navbar({ isLoggedIn = false }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Navbar entrance — drops in once on mount, links stagger in after it.
-  // ".nav-link" also matches links rendered by ProsMenu/MobileMenu
-  // since they're still DOM descendants of this header — splitting
-  // those out doesn't change what this selector finds.
   useGSAP(
     () => {
       gsap.from(navRef.current, {
@@ -49,7 +45,9 @@ export default function Navbar({ isLoggedIn = false }) {
       data-nav
       className={
         "fixed top-0 inset-x-0 z-50 transition-colors duration-500 " +
-        (scrolled ? "bg-ink/85 backdrop-blur-md border-b border-thread/10" : "bg-transparent")
+        (scrolled
+          ? "bg-ink/85 backdrop-blur-md border-b border-thread/10"
+          : "bg-transparent")
       }
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between h-18 py-4">
@@ -105,7 +103,10 @@ export default function Navbar({ isLoggedIn = false }) {
           )}
         </div>
 
-        <MobileMenu isLoggedIn={isLoggedIn} />
+        <div className="flex md:hidden items-center gap-4">
+          <ProsMenu />
+          <MobileMenu isLoggedIn={isLoggedIn} />
+        </div>
       </div>
     </header>
   );
